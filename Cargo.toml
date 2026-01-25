@@ -1,0 +1,5 @@
+[dependencies]
+dioxus = { version = "0.7.0" }
+
+[workspace] 
+members = ["core", "backend", "frontend"]
