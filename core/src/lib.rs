@@ -1,18 +1,20 @@
-use serde::{Serialize,Deserialize};
-#[derive(Serialize,Deserialize)]
-pub struct Memo { pub id:i64, pub content:String, pub public:bool, pub created_at:String }
+use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Memo {
+    pub id: Uuid,
+    pub title: Option<String>,
+    pub content: String,
+    pub public: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewMemo {
+    pub title: Option<String>,
+    pub content: String,
+    pub public: Option<bool>,
 }
