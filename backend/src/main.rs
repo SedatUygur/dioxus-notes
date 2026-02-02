@@ -1,6 +1,7 @@
 use sqlx::{PgPool, FromRow};
 use uuid::Uuid;
 use chrono::{Utc, DateTime};
+use core::{Memo};
 /* use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -14,7 +15,7 @@ use dotenvy::dotenv;
 use std::env;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{fmt, EnvFilter};
-use core::{Memo, NewMemo}; */
+*/
 
 #[derive(Clone)]
 struct AppState {
@@ -30,3 +31,21 @@ struct DbMemo {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
+
+impl From<DbMemo> for Memo {
+    fn from(d: DbMemo) -> Self {
+        Memo {
+            id: d.id,
+            title: d.title,
+            content: d.content,
+            public: d.public,
+            created_at: d.created_at,
+            updated_at: d.updated_at,
+        }
+    }
+}
+
+async fn main() {
+    println!("Hello, world!");
+}
+
