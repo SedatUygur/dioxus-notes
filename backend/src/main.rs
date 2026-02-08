@@ -2,7 +2,7 @@ use sqlx::{PgPool, FromRow};
 use uuid::Uuid;
 use chrono::{Utc, DateTime};
 use core::{Memo};
-/* use axum::{
+use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
@@ -10,11 +10,12 @@ use core::{Memo};
     Json, Router,
 };
 use serde_json::json;
+use tracing_subscriber::{fmt, EnvFilter};
+/*
 use std::net::SocketAddr;
 use dotenvy::dotenv;
 use std::env;
 use tower_http::cors::{Any, CorsLayer};
-use tracing_subscriber::{fmt, EnvFilter};
 */
 
 #[derive(Clone)]
@@ -47,5 +48,19 @@ impl From<DbMemo> for Memo {
 
 async fn main() {
     println!("Hello, world!");
+}
+
+async fn list_memos(State(state): State<AppState>) -> impl IntoResponse {
+    let rows = sqlx::query_as::<_, DbMemo>("SELECT * FROM memos ORDER BY created_at DESC LIMIT 100")
+        .fetch_all(&state.db)
+        .await;
+
+    match rows {
+        Ok(items) => (StatusCode::OK, Json(items.into_iter().map(|r| Memo::from(r)).collect::<Vec<_>>())),
+        Err(e) => {
+            tracing::error!("db error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error":"db error"})))
+        }
+    }
 }
 
