@@ -64,3 +64,18 @@ async fn list_memos(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
+async fn get_memo(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+    let rec = sqlx::query_as::<_, DbMemo>("SELECT * FROM memos WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.db)
+        .await;
+
+    match rec {
+        Ok(row) => (StatusCode::OK, Json(Memo::from(row))),
+        Err(sqlx::Error::RowNotFound) => (StatusCode::NOT_FOUND, Json(json!({"error":"not found"}))),
+        Err(e) => {
+            tracing::error!("db error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error":"db error"})))
+        }
+    }
+}
