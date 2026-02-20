@@ -79,3 +79,21 @@ async fn get_memo(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl I
         }
     }
 }
+
+async fn search_memos(State(state): State<AppState>, axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>) -> impl IntoResponse {
+    let q = params.get("q").map(|s| s.as_str()).unwrap_or("");
+    // simple ILIKE search on title and content
+    let pattern = format!("%{}%", q);
+    let rows = sqlx::query_as::<_, DbMemo>("SELECT * FROM memos WHERE title ILIKE $1 OR content ILIKE $1 ORDER BY created_at DESC LIMIT 100")
+        .bind(pattern)
+        .fetch_all(&state.db)
+        .await;
+
+    match rows {
+        Ok(items) => (StatusCode::OK, Json(items.into_iter().map(|r| Memo::from(r)).collect::<Vec<_>>())),
+        Err(e) => {
+            tracing::error!("search error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error":"search failed"})))
+        }
+    }
+}
