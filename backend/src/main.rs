@@ -97,3 +97,26 @@ async fn search_memos(State(state): State<AppState>, axum::extract::Query(params
         }
     }
 }
+
+async fn create_memo(State(state): State<AppState>, Json(payload): Json<NewMemo>) -> impl IntoResponse {
+    let public = payload.public.unwrap_or(false);
+    let title = payload.title.clone();
+    let content = payload.content.clone();
+
+    let rec = sqlx::query_as::<_, DbMemo>(
+        "INSERT INTO memos (title, content, public) VALUES ($1, $2, $3) RETURNING id, title, content, public, created_at, updated_at"
+    )
+    .bind(title)
+    .bind(content)
+    .bind(public)
+    .fetch_one(&state.db)
+    .await;
+
+    match rec {
+        Ok(row) => (StatusCode::CREATED, Json(Memo::from(row))),
+        Err(e) => {
+            tracing::error!("insert error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error":"insert failed"})))
+        }
+    }
+}
